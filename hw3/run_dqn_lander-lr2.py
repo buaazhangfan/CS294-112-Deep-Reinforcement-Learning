@@ -24,7 +24,7 @@ def lander_model(obs, num_actions, scope, reuse=False):
 def lander_optimizer():
     return dqn.OptimizerSpec(
         constructor=tf.train.AdamOptimizer,
-        lr_schedule=ConstantSchedule(2e-3),
+        lr_schedule=ConstantSchedule(3e-3),
         kwargs={}
     )
 
@@ -72,7 +72,7 @@ def lander_learn(env,
         session=session,
         exploration=lander_exploration_schedule(num_timesteps),
         stopping_criterion=lander_stopping_criterion(num_timesteps),
-        rew_file = 'Lander',
+        rew_file = 'Lander_lr3e3',
         double_q=False,
         **lander_kwargs()
     )

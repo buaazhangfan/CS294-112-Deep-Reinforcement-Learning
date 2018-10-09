@@ -21,6 +21,7 @@ def atari_model(img_in, num_actions, scope, reuse=False):
             out = layers.convolution2d(out, num_outputs=32, kernel_size=8, stride=4, activation_fn=tf.nn.relu)
             out = layers.convolution2d(out, num_outputs=64, kernel_size=4, stride=2, activation_fn=tf.nn.relu)
             out = layers.convolution2d(out, num_outputs=64, kernel_size=3, stride=1, activation_fn=tf.nn.relu)
+
         out = layers.flatten(out)
         with tf.variable_scope("action_value"):
             out = layers.fully_connected(out, num_outputs=512,         activation_fn=tf.nn.relu)
@@ -30,11 +31,13 @@ def atari_model(img_in, num_actions, scope, reuse=False):
 
 def atari_learn(env,
                 session,
-                num_timesteps):
+                num_timesteps,
+                lr_multiplier):
     # This is just a rough estimate
     num_iterations = float(num_timesteps) / 4.0
 
-    lr_multiplier = 1.0
+    lr_multiplier = lr_multiplier
+    print("The learning rate multiplier is :", lr_multiplier)
     lr_schedule = PiecewiseSchedule([
                                          (0,                   1e-4 * lr_multiplier),
                                          (num_iterations / 10, 1e-4 * lr_multiplier),
@@ -75,7 +78,9 @@ def atari_learn(env,
         frame_history_len=4,
         target_update_freq=10000,
         grad_norm_clipping=10,
-        double_q=True
+        rew_file = 'Atari_Pong' + 'lr_multi' + str(lr_multiplier),
+        double_q=False
+        
     )
     env.close()
 
@@ -116,15 +121,26 @@ def get_env(task, seed):
     return env
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--multiplier', '-m', type = float, default = 1)
+    parser.add_argument('--seed', action='store_true')
+    args = parser.parse_args()
+
+
     # Get Atari games.
     task = gym.make('PongNoFrameskip-v4')
 
+    if args.seed:
+        seed = 5000
+        print('seed = %d' % seed)
     # Run training
-    seed = random.randint(0, 9999)
-    print('random seed = %d' % seed)
+    else:
+        seed = random.randint(0, 9999)
+        print('random seed = %d' % seed)
     env = get_env(task, seed)
     session = get_session()
-    atari_learn(env, session, num_timesteps=2e8)
+    atari_learn(env, session, num_timesteps=2e8, lr_multiplier = args.multiplier)
 
 if __name__ == "__main__":
     main()

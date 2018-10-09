@@ -32,7 +32,7 @@ class QLearner(object):
     target_update_freq=10000,
     grad_norm_clipping=10,
     rew_file=None,
-    double_q=False,
+    double_q=True,
     lander=False):
     """Run Deep Q-learning algorithm.
 
@@ -99,7 +99,10 @@ class QLearner(object):
     self.env = env
     self.session = session
     self.exploration = exploration
-    self.rew_file = str(uuid.uuid4()) + '.pkl' if rew_file is None else rew_file
+    if double_q:
+      self.rew_file = 'DDQN' + rew_file + '.pkl'
+    else:
+      self.rew_file = 'DQN' + rew_file + '.pkl'
 
     ###############
     # BUILD MODEL #
@@ -173,13 +176,15 @@ class QLearner(object):
 
     if double_q: 
       print("Using double Q-learning")
-      q_new = q_func(obs_tp1_float, self.num_actions, scope = "q_func", reuse = True)
-      q_action = tf.argmax(q_new, axis = 1)
-      q_tp1_temp = (1.0 - self.done_mask_ph) * gamma * tf.stop_gradient(tf.reduce_max(tf.one_hot(q_action, self.num_actions) * q_tp1, axis = 1))
+      q_online = q_func(obs_tp1_float, self.num_actions, scope = "q_func", reuse = True)
+      action_online = tf.argmax(q_online, axis = 1)
+      q_tp1_temp = (1.0 - self.done_mask_ph) * gamma * tf.stop_gradient(tf.reduce_sum(tf.one_hot(action_online, self.num_actions) * q_tp1, axis = 1))
     else:
-      #q_tp1_temp = (1.0 - self.done_mask_ph) * gamma * tf.stop_gradient(tf.reduce_max(q_tp1, axis = 1))
-      q_tp1_temp = (1.0 - self.done_mask_ph) * gamma * tf.reduce_max(q_tp1, axis = 1)
-    target_q = tf.add(self.rew_t_ph, q_tp1_temp)
+      print('Using vanilla Q-learning')
+      q_tp1_temp = (1.0 - self.done_mask_ph) * gamma * tf.stop_gradient(tf.reduce_max(q_tp1, axis = 1))
+      #q_tp1_temp = (1.0 - self.done_mask_ph) * gamma * tf.reduce_max(q_tp1, axis = 1)
+    
+    target_q = self.rew_t_ph + q_tp1_temp
 
     # Q-value
     actual_q = tf.reduce_sum(tf.one_hot(self.act_t_ph, self.num_actions) * q_t, axis = 1)
@@ -266,7 +271,7 @@ class QLearner(object):
     idx = self.replay_buffer.store_frame(self.last_obs)
     obs = self.replay_buffer.encode_recent_observation()
 
-    if not self.model_initialized or np.random.random() < self.exploration.value(self.t):
+    if not self.model_initialized or random.random() < self.exploration.value(self.t):
       action = self.env.action_space.sample()
       #print("Initialize", action)
     else:
@@ -331,7 +336,7 @@ class QLearner(object):
       #2. Initialize
       if not self.model_initialized:
         initialize_interdependent_variables(self.session, tf.global_variables(), {self.obs_t_ph: obs_t_batch, self.obs_tp1_ph: obs_tp1_batch,})
-      self.model_initialized = True
+        self.model_initialized = True
 
       #3. Train the model
       feed_dict = {self.obs_t_ph: obs_t_batch,

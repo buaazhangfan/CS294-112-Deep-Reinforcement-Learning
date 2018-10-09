@@ -1,8 +1,12 @@
 .DS_Store
+
+
 */.DS_Store
 
 __pycache__
 
 Thumbs.db
+
+.ipynb_checkpoints/
 
 .gitignore
