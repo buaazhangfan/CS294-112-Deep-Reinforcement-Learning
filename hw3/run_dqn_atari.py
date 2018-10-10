@@ -32,7 +32,8 @@ def atari_model(img_in, num_actions, scope, reuse=False):
 def atari_learn(env,
                 session,
                 num_timesteps,
-                lr_multiplier):
+                lr_multiplier,
+                double_q):
     # This is just a rough estimate
     num_iterations = float(num_timesteps) / 4.0
 
@@ -79,7 +80,7 @@ def atari_learn(env,
         target_update_freq=10000,
         grad_norm_clipping=10,
         rew_file = 'Atari_Pong' + 'lr_multi' + str(lr_multiplier),
-        double_q=False
+        double_q=double_q
         
     )
     env.close()
@@ -125,6 +126,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--multiplier', '-m', type = float, default = 1)
     parser.add_argument('--seed', action='store_true')
+    parser.add_argument('--double', action = 'store_true')
     args = parser.parse_args()
 
 
@@ -140,7 +142,7 @@ def main():
         print('random seed = %d' % seed)
     env = get_env(task, seed)
     session = get_session()
-    atari_learn(env, session, num_timesteps=2e8, lr_multiplier = args.multiplier)
+    atari_learn(env, session, num_timesteps=2e8, lr_multiplier = args.multiplier, double_q = args.double)
 
 if __name__ == "__main__":
     main()

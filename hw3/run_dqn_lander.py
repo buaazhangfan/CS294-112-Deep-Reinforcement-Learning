@@ -24,7 +24,7 @@ def lander_model(obs, num_actions, scope, reuse=False):
 def lander_optimizer():
     return dqn.OptimizerSpec(
         constructor=tf.train.AdamOptimizer,
-        lr_schedule=ConstantSchedule(2e-3),
+        lr_schedule=ConstantSchedule(1e-4),
         kwargs={}
     )
 
