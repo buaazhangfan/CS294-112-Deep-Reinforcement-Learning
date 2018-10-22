@@ -87,9 +87,9 @@ class ModelBasedRL(object):
         ### YOUR CODE HERE
         #raise NotImplementedError
         for epoch in range(self._training_epochs):
-            print('The current epoch is %d' % epoch)
+            #print('The current epoch is %d' % epoch)
             for r_num, (states, actions, next_states, _, _) in enumerate(dataset.random_iterator(self._training_batch_size)):
-                print('The %d th iter in the batch' % r_num)
+                #print('The %d th iter in the batch' % r_num)
                 loss = self._policy.train_step(states, actions, next_states)
                 losses.append(loss)
 
@@ -167,13 +167,14 @@ class ModelBasedRL(object):
 
         logger.info('Training policy....')
         ### PROBLEM 2
-        ### YOUR CODE HERE
-        raise NotImplementedError
+        self._train_policy(self._random_dataset)
+        #raise NotImplementedError
 
         logger.info('Evaluating policy...')
         ### PROBLEM 2
         ### YOUR CODE HERE
-        raise NotImplementedError
+        eval_dataset = self._gather_rollouts(self._policy, self._num_onpolicy_rollouts)
+        #raise NotImplementedError
 
         logger.info('Trained policy')
         self._log(eval_dataset)

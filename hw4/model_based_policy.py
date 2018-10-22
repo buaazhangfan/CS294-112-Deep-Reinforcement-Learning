@@ -143,7 +143,20 @@ class ModelBasedPolicy(object):
         """
         ### PROBLEM 2
         ### YOUR CODE HERE
-        raise NotImplementedError
+        #raise NotImplementedError
+        action_shape = [self._num_random_action_selection, self._horizon, self._action_dim]
+        sample_action = tf.random_uniform(action_shape, minval = self._action_space_low, maxval = self._action_space_high)
+        cost = tf.zeros([self._num_random_action_selection])
+        states = tf.stack([state_ph[0]] * self._num_random_action_selection)
+        for t in range(self._horizon):
+            #print(sample_action[:, t].shape)
+            new_states = self._dynamics_func(states, sample_action[:, t], reuse = True)
+            #print(new_states.shape)
+            cost += self._cost_fn(states, sample_action[:, t], new_states)
+            states = new_states
+
+        mini_ind = tf.argmin(cost)
+        best_action = sample_action[mini_ind][0]
 
         return best_action
 
@@ -163,7 +176,7 @@ class ModelBasedPolicy(object):
         #raise NotImplementedError
         ### PROBLEM 2
         ### YOUR CODE HERE
-        best_action = None
+        best_action = self._setup_action_selection(state_ph)
 
         sess.run(tf.global_variables_initializer())
 
@@ -207,7 +220,9 @@ class ModelBasedPolicy(object):
         #raise NotImplementedError
         '''
             self._next_state_pred
+            expand 1-dimensional to 2-dimensional
         '''
+
         feed_dict = {self._state_ph: np.expand_dims(state, axis = 0), self._action_ph: np.expand_dims(action, axis = 0)}
 
         next_state_pred = self._sess.run(self._next_state_pred, feed_dict = feed_dict)
@@ -227,7 +242,8 @@ class ModelBasedPolicy(object):
 
         ### PROBLEM 2
         ### YOUR CODE HERE
-        raise NotImplementedError
+        best_action = self._sess.run(self._best_action, feed_dict = {self._state_ph: state[None]})
+        #raise NotImplementedError
 
         assert np.shape(best_action) == (self._action_dim,)
         return best_action
