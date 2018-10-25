@@ -127,6 +127,7 @@ class ModelBasedRL(object):
         self._train_policy(self._random_dataset)
 
         logger.info('Evaluating predictions...')
+
         for r_num, (states, actions, _, _, _) in enumerate(self._random_dataset.rollout_iterator()):
             pred_states = []
             #print(states.shape)
