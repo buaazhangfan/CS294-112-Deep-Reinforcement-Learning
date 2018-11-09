@@ -54,6 +54,12 @@ class ObservedPointEnv(Env):
         # move to next state
         self._state = self._state + action
         ob = self._get_obs()
+
+        #Add task ID to observation space
+        task_onehot = np.zeros(num_tasks)
+        task_onehot[self.task_idx] = 1;
+        ob = np.concatenate(ob, task_onehot)
+        
         return ob, reward, done, dict()
 
     def viewer_setup(self):
