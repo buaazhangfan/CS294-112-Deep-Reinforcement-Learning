@@ -19,10 +19,11 @@ class ObservedPointEnv(Env):
     def __init__(self, num_tasks=1):
         self.tasks = [0, 1, 2, 3][:num_tasks]
         self.task_idx = -1
+        self.num_tasks = num_tasks
         self.reset_task()
         self.reset()
 
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(2,))
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(2 + num_tasks,))
         self.action_space = spaces.Box(low=-0.1, high=0.1, shape=(2,))
 
     def reset_task(self, is_evaluation=False):
@@ -41,7 +42,10 @@ class ObservedPointEnv(Env):
         return self._get_obs()
 
     def _get_obs(self):
-        return np.copy(self._state)
+        one_hot = np.zeros(len(self.tasks))
+        one_hot[self._task] = 1
+
+        return np.concatenate((np.copy(self._state), one_hot))
 
     def step(self, action):
         x, y = self._state
@@ -54,11 +58,6 @@ class ObservedPointEnv(Env):
         # move to next state
         self._state = self._state + action
         ob = self._get_obs()
-
-        #Add task ID to observation space
-        task_onehot = np.zeros(num_tasks)
-        task_onehot[self.task_idx] = 1;
-        ob = np.concatenate(ob, task_onehot)
         
         return ob, reward, done, dict()
 

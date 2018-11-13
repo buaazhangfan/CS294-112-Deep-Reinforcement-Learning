@@ -55,6 +55,8 @@ def build_mlp(x, output_size, scope, n_layers, size, activation=tf.tanh, output_
         x = tf.layers.dense(inputs=x,units=size, activation=activation, name='fc{}'.format(i), kernel_regularizer=regularizer, bias_regularizer=regularizer)
 
     x = tf.layers.dense(inputs=x, units=output_size, activation=output_activation, name='fc{}'.format(i + 1), kernel_regularizer=regularizer, bias_regularizer=regularizer)
+    # x.shape = (?, 32)
+
     return x
 
 def build_rnn(x, h, output_size, scope, n_layers, size, activation=tf.tanh, output_activation=None, regularizer=None):
@@ -76,6 +78,20 @@ def build_rnn(x, h, output_size, scope, n_layers, size, activation=tf.tanh, outp
     #====================================================================================#
     # YOUR CODE HERE
 
+    # Make MLP layers
+    # x.shape = (?, 60, 6)
+    # h.shape = (?, 32)
+    x = build_mlp(x, output_size, scope, n_layers, size, activation = activation, output_activation = output_activation, regularizer = regularizer)
+    # After the MLP model the x.shape = (?, 60, 32)
+
+    # Make GRU Cells
+    GRU_cell = tf.nn.rnn_cell.GRUCell(output_size, activation = activation)
+    # Make RNN model
+    x, h = tf.nn.dynamic_rnn(GRU_cell, x, initial_state = h)
+    x = x[:, -1, :]
+    # x.shape = (?, 60, 32)
+    #input()
+    return x, h
 def build_policy(x, h, output_size, scope, n_layers, size, gru_size, recurrent=True, activation=tf.tanh, output_activation=None):
     """
     build recurrent policy
@@ -377,26 +393,30 @@ class Agent(object):
                 # first meta ob has only the observation
                 # set a, r, d to zero, construct first meta observation in meta_obs
                 # YOUR CODE HERE
-
+                meta_obs[steps + self.history, :self.ob_dim] = ob
                 steps += 1
 
             # index into the meta_obs array to get the window that ends with the current timestep
             # please name the windowed observation `in_` for compatibilty with the code that adds to the replay buffer (lines 418, 420)
             # YOUR CODE HERE
-
+            in_ = meta_obs[steps: steps + self.history, :]
+            
             hidden = np.zeros((1, self.gru_size), dtype=np.float32)
 
             # get action from the policy
             # YOUR CODE HERE
-
+            ac = self.sess.run(self.sy_sampled_ac, feed_dict = {self.sy_ob_no: [in_], self.sy_hidden: hidden})
+            ac = ac[0]
             # step the environment
             # YOUR CODE HERE
-
+            obs, rew, done, _ = env.step(ac)
             ep_steps += 1
 
             done = bool(done) or ep_steps == self.max_path_length
             # construct the meta-observation and add it to meta_obs
             # YOUR CODE HERE
+            #print(self.meta_ob_dim)
+            meta_obs[steps + self.history] = np.concatenate((obs, ac, [rew], [done])) 
 
             rewards.append(rew)
             steps += 1
