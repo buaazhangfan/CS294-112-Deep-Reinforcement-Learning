@@ -81,16 +81,23 @@ def build_rnn(x, h, output_size, scope, n_layers, size, activation=tf.tanh, outp
     # Make MLP layers
     # x.shape = (?, 60, 6)
     # h.shape = (?, 32)
+    history = x.shape[1];
+    #x = tf.reshape(x, (-1, x.get_shape()[1]*x.get_shape()[2]))
+    # x.shape = (?, 360) after flatten
     x = build_mlp(x, output_size, scope, n_layers, size, activation = activation, output_activation = output_activation, regularizer = regularizer)
     # After the MLP model the x.shape = (?, 60, 32)
 
+    #x = tf.reshape(x, (-1, history, output_size))
+    #print(x.shape)
+    #input()
     # Make GRU Cells
     GRU_cell = tf.nn.rnn_cell.GRUCell(output_size, activation = activation)
     # Make RNN model
     x, h = tf.nn.dynamic_rnn(GRU_cell, x, initial_state = h)
-    x = x[:, -1, :]
     # x.shape = (?, 60, 32)
-    #input()
+    x = x[:, -1, :]
+    # Get the latest timestamp output
+    # x.shape = (?,32)
     return x, h
 def build_policy(x, h, output_size, scope, n_layers, size, gru_size, recurrent=True, activation=tf.tanh, output_activation=None):
     """
