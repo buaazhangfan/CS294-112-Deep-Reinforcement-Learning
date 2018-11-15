@@ -15,7 +15,8 @@ class PointEnv(Env):
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(2,))
         self.action_space = spaces.Box(low=-0.1, high=0.1, shape=(2,))
 
-    def reset_task(self, is_evaluation=False):
+
+    def reset_task(self, generalized=False, granularity=1, is_evaluation=False):
         '''
         sample a new task randomly
 
@@ -27,9 +28,45 @@ class PointEnv(Env):
         #                           ----------PROBLEM 3----------
         #====================================================================================#
         # YOUR CODE HERE
-        x = np.random.uniform(-10, 10)
-        y = np.random.uniform(-10, 10)
+        # Construct the chessboard space with 20 x 20
+        # The granularity is the size of squares, the value can be chosen from [1, 2, 4, 5, 10]
+        if generalized:  
+            print("Problem 3...")  
+            print("The size of square is ", granularity)       
+            size = int(20 / granularity)
+            space = np.zeros((size, size))
+            space[1::2,::2] = 1
+            space[::2,1::2] = 1
+            if is_evaluation:
+                dataset = np.where(space == 1)
+            else:
+                dataset = np.where(space == 0)
+
+            dataset = np.asarray(dataset).T
+            nums = dataset.shape[0]
+            idx = np.random.randint(0, nums)
+            if is_evaluation:
+                print("Evaluation")
+            else:
+                print("training")
+
+            goal = dataset[idx]
+            goal[0] = goal[0] * granularity
+            goal[1] = goal[1] * granularity
+
+            x = np.random.uniform(goal[0], goal[0] + granularity) - 10
+            y = np.random.uniform(goal[1], goal[1] + granularity) - 10
+            print((x, y))
+        else:
+            #print("Problem 2...")
+            x = np.random.uniform(-10, 10)
+            y = np.random.uniform(-10, 10)
+
         self._goal = np.array([x, y])
+
+        #x = np.random.uniform(-10, 10)
+        #y = np.random.uniform(-10, 10)
+        #self._goal = np.array([x, y])
 
     def reset(self):
         self._state = np.array([0, 0], dtype=np.float32)

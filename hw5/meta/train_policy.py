@@ -23,6 +23,8 @@ from replay_buffer import ReplayBuffer, PPOReplayBuffer
 from point_mass import PointEnv
 from point_mass_observed import ObservedPointEnv
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
 #============================================================================================#
 # Utilities
 #============================================================================================#
@@ -91,6 +93,8 @@ def build_rnn(x, h, output_size, scope, n_layers, size, activation=tf.tanh, outp
     #print(x.shape)
     #input()
     # Make GRU Cells
+
+    GRU_cell = tf.contrib.cudnn_rnn.CudnnGRU(1, output_size, )
     GRU_cell = tf.nn.rnn_cell.GRUCell(output_size, activation = activation)
     # Make RNN model
     x, h = tf.nn.dynamic_rnn(GRU_cell, x, initial_state = h)
@@ -123,6 +127,7 @@ def build_policy(x, h, output_size, scope, n_layers, size, gru_size, recurrent=T
     """
     with tf.variable_scope(scope, reuse=tf.AUTO_REUSE):
         if recurrent:
+            print("Using recurrent neural network")
             x, h = build_rnn(x, h, gru_size, scope, n_layers, size, activation=activation, output_activation=activation)
         else:
             x = tf.reshape(x, (-1, x.get_shape()[1]*x.get_shape()[2]))
@@ -191,6 +196,8 @@ class Agent(object):
         self.animate = sample_trajectory_args['animate']
         self.max_path_length = sample_trajectory_args['max_path_length']
         self.min_timesteps_per_batch = sample_trajectory_args['min_timesteps_per_batch']
+        self.generalized = sample_trajectory_args['generalized']
+        self.granularity = sample_trajectory_args['granularity']
 
         self.gamma = estimate_return_args['gamma']
         self.nn_critic = estimate_return_args['nn_critic']
@@ -378,7 +385,7 @@ class Agent(object):
             animate_this_episode: if True then render
             val: whether this is training or evaluation
         """
-        env.reset_task(is_evaluation=is_evaluation)
+        env.reset_task(generalized=self.generalized, granularity=self.granularity, is_evaluation=is_evaluation)
         stats = []
         #====================================================================================#
         #                           ----------PROBLEM 1----------
@@ -626,6 +633,8 @@ def train_PG(
         num_tasks,
         l2reg,
         recurrent,
+        generalized,
+        granularity
         ):
 
     start = time.time()
@@ -680,6 +689,8 @@ def train_PG(
         'animate': animate,
         'max_path_length': max_path_length,
         'min_timesteps_per_batch': min_timesteps_per_batch,
+        'generalized': generalized,
+        'granularity': granularity,
     }
 
     estimate_return_args = {
@@ -815,6 +826,9 @@ def main():
     parser.add_argument('--history', '-ho', type=int, default=1)
     parser.add_argument('--l2reg', '-reg', action='store_true')
     parser.add_argument('--recurrent', '-rec', action='store_true')
+    # Add argument to support problem 3:
+    parser.add_argument('--generalized', action='store_true')
+    parser.add_argument('--granularity', type=int, default=1)
     args = parser.parse_args()
 
     if not(os.path.exists('data')):
@@ -856,6 +870,8 @@ def main():
                 num_tasks=args.num_tasks,
                 l2reg=args.l2reg,
                 recurrent=args.recurrent,
+                generalized=args.generalized, #Generalized
+                granularity=args.granularity  #Granularity
                 )
         # # Awkward hacky process runs, because Tensorflow does not like
         # # repeatedly calling train_PG in the same thread.
