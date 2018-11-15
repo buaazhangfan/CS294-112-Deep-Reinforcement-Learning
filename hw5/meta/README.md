@@ -15,6 +15,7 @@ Instructions: [HW5c PDF](http://rail.eecs.berkeley.edu/deeprlcourse/static/homew
 ### 1. Problem1 Context as Task ID
 
 Run the following command:
+
 `python train_policy.py 'pm-obs' --exp_name <experiment_name> --history 1 -lr 5e-5 -n 200 --num_tasks 4`
 
 ### 2. Problem2 Meta-Learned Context
@@ -22,8 +23,12 @@ Run the following command:
 Run the following command:
 
 **With MLP model**
+
 `python train_policy.py 'pm' --exp_name <experiment_name> --history <history> --discount 0.90 -lr 5e-4 -n 60`
+
+
 **With RNN model**
+
 `python train_policy.py 'pm' --exp_name <experiment_name> --history <history> --discount 0.90 -lr 5e-4 -n 60 --recurrent`
 
 ### 3. Problem3 Generalization
