@@ -3,7 +3,7 @@
 ---
 
 ###Run the bash script
-### `./hw1.bash` 
+###### `./hw1.bash` 
 ###to get all results of hw1
 
 
@@ -20,16 +20,18 @@ Run `python run_expert.py experts/task.pkl task --render --num_rollouts [num]` t
 Eg. 
 `python run_expert.py experts/Hopper-v2.pkl Hopper-v2 --render --num_rollouts 20` for the Hopper task
 `python run_expert.py experts/Reacher-v2.pkl Reacher-v2 --render --num_rollouts 400` for the Reacher task
+
 2. Implement Behavior_cloning<br>
 Run `python behavior_cloning.py experts/task.pkl task --render --num_rollouts [num]`to implement BC<br>
 Eg. 
 `python behavior_cloning.py experts/Hopper-v2.pkl Hopper-v2 --render --num_rollouts 20`for the Hopper task
 `python behavior_cloning.py experts/Reacher-v2.pkl Reacher-v2 --render --num_rollouts 400`for the Reacher task<br>
-
 This command will generate a `.pkl` file which saves mean value of reward and std of reward with epoch increasing
+
 3. Implement DAgger<br>
 Run `python DAgger.py experts/Hopper-v2.pkl Hopper-v2 --render --num_rollouts 20`for the Hopper task<br>
 This command will also generate a `.pkl` file which saves mean value of reward and std of reward with DAgger iterations.
+
 4. Plot<br>
 With the `.pkl` files generated from step2 and step3, run
 `python plot.py Hopper-v2 --num_rollouts 20` to generate figures for behavior cloning and DAgger
